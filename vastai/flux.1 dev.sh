@@ -60,6 +60,8 @@ VAE_MODELS=(
 
 ESRGAN_MODELS=(
     "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
+    "https://huggingface.co/Tenofas/ComfyUI/resolve/main/upscale_models/4x-UltraSharpV2.safetensors?download=true"
+    "https://huggingface.co/Tenofas/ComfyUI/resolve/main/upscale_models/x1_ITF_SkinDiffDetail_Lite_v1.pth?download=true"
 )
 
 CONTROLNET_MODELS=(
@@ -114,7 +116,7 @@ function provisioning_get_pip_packages() {
 function provisioning_get_nodes() {
     for repo in "${NODES[@]}"; do
         dir="${repo##*/}"
-        path="${COMFYUI_DIR}custom_nodes/${dir}"
+        path="${COMFYUI_DIR}/custom_nodes/${dir}"
         requirements="${path}/requirements.txt"
         if [[ -d $path ]]; then
             if [[ ${AUTO_UPDATE,,} != "false" ]]; then
