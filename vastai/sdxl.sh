@@ -26,39 +26,28 @@ WORKFLOWS=(
 )
 
 CHECKPOINT_MODELS=(
+    "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
 )
 
 DIFFUSION_MODELS=(
-    "https://huggingface.co/Comfy-Org/FLUX.1-Krea-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-krea-dev_fp8_scaled.safetensors"
 )
 
 UNET_MODELS=(
 )
 
 LORA_MODELS=(
-    "https://civitai.com/api/download/models/1228264?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/786275?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/870190?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/1244911?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/1188867?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/1041921?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/1668530?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/1050496?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/970280?type=Model&format=SafeTensor"
-    "https://civitai.com/api/download/models/1366323?type=Model&format=SafeTensor"
-)
-
-TEXT_ENCODERS=(
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors?download=true"
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors"
+    "https://civitai.com/api/download/models/864266?type=Model&format=SafeTensor"
+    "https://civitai.com/api/download/models/135867?type=Model&format=SafeTensor"
+    "https://civitai.com/api/download/models/302404?type=Model&format=SafeTensor"
+    "https://civitai.com/api/download/models/128461?type=Model&format=SafeTensor"
+    "https://civitai.com/api/download/models/287900?type=Model&format=SafeTensor"
 )
 
 VAE_MODELS=(
-    "https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors?download=true"
+
 )
 
 ESRGAN_MODELS=(
-    "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
 )
 
 CONTROLNET_MODELS=(
@@ -89,12 +78,6 @@ function provisioning_start() {
     provisioning_get_files \
         "${COMFYUI_DIR}/models/upscale_models" \
         "${ESRGAN_MODELS[@]}"
-    provisioning_get_files \
-        "${COMFYUI_DIR}/models/diffusion_models" \
-        "${DIFFUSION_MODELS[@]}"
-    provisioning_get_files \
-        "${COMFYUI_DIR}/models/text_encoders" \
-        "${TEXT_ENCODERS[@]}"
     provisioning_print_end
 }
 
