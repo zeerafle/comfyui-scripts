@@ -6,6 +6,7 @@ COMFYUI_DIR=${WORKSPACE}/ComfyUI
 # Packages are installed after nodes so we can fix them...
 
 APT_PACKAGES=(
+    "aria2"
     #"package-1"
     #"package-2"
 )
@@ -113,14 +114,29 @@ function provisioning_get_nodes() {
 function provisioning_get_files() {
     if [[ -z $2 ]]; then return 1; fi
 
-    dir="$1"
+    local dir="$1"
     mkdir -p "$dir"
     shift
-    arr=("$@")
+    local arr=("$@")
+
     printf "Downloading %s model(s) to %s...\n" "${#arr[@]}" "$dir"
-    for url in "${arr[@]}"; do
+    for entry in "${arr[@]}"; do
+        local url=""
+        local custom_name=""
+
+        # Parse URL|Name format
+        if [[ "$entry" == *"|"* ]]; then
+            url="${entry%|*}"
+            custom_name="${entry#*|}"
+        else
+            url="$entry"
+        fi
+
         printf "Downloading: %s\n" "${url}"
-        provisioning_download "${url}" "${dir}"
+        if [[ -n "$custom_name" ]]; then
+            printf "Saving as: %s\n" "$custom_name"
+        fi
+        provisioning_download "${url}" "${dir}" "$custom_name"
         printf "\n"
     done
 }
@@ -165,21 +181,62 @@ function provisioning_has_valid_civitai_token() {
     fi
 }
 
-# Download from $1 URL to $2 file path
+# Download from $1 URL to $2 file path with optional $3 custom filename
 function provisioning_download() {
-    if [[ -n $HF_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
-        auth_token="$HF_TOKEN"
-        wget --header="Authorization: Bearer $auth_token" -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
-    elif [[ -n $CIVITAI_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
-        # For Civitai, append token as URL parameter
-        if [[ $1 == *"?"* ]]; then
-            url="${1}&token=${CIVITAI_TOKEN}"
+    local url="$1"
+    local destination="$2"
+    local custom_filename="$3"
+
+    if [[ -n $HF_TOKEN && $url =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
+        # HuggingFace download with authorization header
+        if [[ -n "$custom_filename" ]]; then
+            aria2c --header="Authorization: Bearer $HF_TOKEN" \
+                   --out="$custom_filename" \
+                   --continue=true \
+                   --max-connection-per-server=4 \
+                   --split=4 \
+                   --dir="$destination" "$url"
         else
-            url="${1}?token=${CIVITAI_TOKEN}"
+            aria2c --header="Authorization: Bearer $HF_TOKEN" \
+                   --continue=true \
+                   --max-connection-per-server=4 \
+                   --split=4 \
+                   --dir="$destination" "$url"
         fi
-        wget -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$url"
+    elif [[ -n $CIVITAI_TOKEN && $url =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
+        # For Civitai, append token as URL parameter
+        if [[ $url == *"?"* ]]; then
+            download_url="${url}&token=${CIVITAI_TOKEN}"
+        else
+            download_url="${url}?token=${CIVITAI_TOKEN}"
+        fi
+
+        if [[ -n "$custom_filename" ]]; then
+            aria2c --out="$custom_filename" \
+                   --continue=true \
+                   --max-connection-per-server=4 \
+                   --split=4 \
+                   --dir="$destination" "$download_url"
+        else
+            aria2c --continue=true \
+                   --max-connection-per-server=4 \
+                   --split=4 \
+                   --dir="$destination" "$download_url"
+        fi
     else
-        wget -qnc --content-disposition --show-progress -e dotbytes="${3:-4M}" -P "$2" "$1"
+        # Generic download
+        if [[ -n "$custom_filename" ]]; then
+            aria2c --out="$custom_filename" \
+                   --continue=true \
+                   --max-connection-per-server=4 \
+                   --split=4 \
+                   --dir="$destination" "$url"
+        else
+            aria2c --continue=true \
+                   --max-connection-per-server=4 \
+                   --split=4 \
+                   --dir="$destination" "$url"
+        fi
     fi
 }
 
