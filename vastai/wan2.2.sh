@@ -112,11 +112,17 @@ function provisioning_print_end() {
 }
 
 function provisioning_download() {
-    if [[ -n $HF_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\\.)?huggingface\\.co(/|$|\\?) ]]; then
+    if [[ -n $HF_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
         auth_token="$HF_TOKEN"
-    fi
-    if [[ -n $auth_token ]]; then
         wget --header="Authorization: Bearer $auth_token" -qnc --content-disposition --show-progress -e dotbytes=4M -P "$2" "$1"
+    elif [[ -n $CIVITAI_TOKEN && $1 =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
+        # For Civitai, append token as URL parameter
+        if [[ $1 == *"?"* ]]; then
+            url="${1}&token=${CIVITAI_TOKEN}"
+        else
+            url="${1}?token=${CIVITAI_TOKEN}"
+        fi
+        wget -qnc --content-disposition --show-progress -e dotbytes=4M -P "$2" "$url"
     else
         wget -qnc --content-disposition --show-progress -e dotbytes=4M -P "$2" "$1"
     fi
