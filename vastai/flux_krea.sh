@@ -6,6 +6,7 @@ COMFYUI_DIR=${WORKSPACE}/ComfyUI
 # Packages are installed after nodes so we can fix them...
 
 APT_PACKAGES=(
+    "aria"
     #"package-1"
     #"package-2"
 )

@@ -87,7 +87,10 @@ function provisioning_start() {
 
 function provisioning_get_apt_packages() {
     if [[ -n $APT_PACKAGES ]]; then
-            sudo $APT_INSTALL ${APT_PACKAGES[@]}
+        printf "Updating package index...\n"
+        sudo apt update
+        printf "Installing APT packages...\n"
+        sudo apt install -y ${APT_PACKAGES[@]}
     fi
 }
 
