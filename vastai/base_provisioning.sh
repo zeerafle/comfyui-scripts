@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Base provisioning functions for ComfyUI scripts
-# Source this file in your specific provisioning scripts
+# This file should be hosted online and downloaded by individual scripts
 
 # Ensure we're in the right environment
-if [[ -z "$WORKSPACE" ]]; then
-    echo "ERROR: WORKSPACE environment variable not set"
+if [[ -z "$DATA_DIRECTORY" ]]; then
+    echo "ERROR: DATA_DIRECTORY environment variable not set"
     exit 1
 fi
 
-COMFYUI_DIR=${WORKSPACE}/ComfyUI
+COMFYUI_DIR=${DATA_DIRECTORY}/ComfyUI
 
 # Default download utility preferences
 USE_ARIA2C=${USE_ARIA2C:-true}
