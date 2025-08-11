@@ -116,10 +116,21 @@ function provisioning_download() {
     local custom_filename="$3"
     local auth_header=""
     local download_url="$url"
+    local extracted_filename=""
 
-    # Handle authentication
+    # Handle authentication and extract filenames
     if [[ -n $HF_TOKEN && $url =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
         auth_header="Authorization: Bearer $HF_TOKEN"
+        # Extract filename from HuggingFace URL if no custom filename provided
+        if [[ -z "$custom_filename" ]]; then
+            # Remove query parameters and extract filename from path
+            local clean_url="${url%\?*}"
+            extracted_filename="${clean_url##*/}"
+            # If extracted filename is empty or looks like a directory, use a fallback
+            if [[ -z "$extracted_filename" || "$extracted_filename" == *"/" ]]; then
+                extracted_filename="huggingface_download_$(date +%s)"
+            fi
+        fi
     elif [[ -n $CIVITAI_TOKEN && $url =~ ^https://([a-zA-Z0-9_-]+\.)?civitai\.com(/|$|\?) ]]; then
         # For Civitai, append token as URL parameter
         if [[ $url == *"?"* ]]; then
@@ -129,9 +140,12 @@ function provisioning_download() {
         fi
     fi
 
+    # Use custom filename, extracted filename, or let the downloader decide
+    local final_filename="${custom_filename:-$extracted_filename}"
+
     # Try aria2c first, fallback to wget
     if [[ $USE_ARIA2C == "true" ]] && command -v aria2c >/dev/null 2>&1; then
-        if provisioning_download_aria2c "$download_url" "$destination" "$custom_filename" "$auth_header"; then
+        if provisioning_download_aria2c "$download_url" "$destination" "$final_filename" "$auth_header" "$url"; then
             return 0
         else
             printf "aria2c failed, falling back to wget...\n"
@@ -139,7 +153,7 @@ function provisioning_download() {
     fi
 
     # Fallback to wget
-    provisioning_download_wget "$download_url" "$destination" "$custom_filename" "$auth_header"
+    provisioning_download_wget "$download_url" "$destination" "$final_filename" "$auth_header" "$url"
 }
 
 function provisioning_download_aria2c() {
@@ -147,28 +161,40 @@ function provisioning_download_aria2c() {
     local destination="$2"
     local custom_filename="$3"
     local auth_header="$4"
+    local original_url="$5"
 
     local args=(
         --continue=true
         --max-connection-per-server="$ARIA2C_MAX_CONN"
         --split="$ARIA2C_SPLIT"
         --dir="$destination"
-        --content-disposition=true
         --auto-file-renaming=false
     )
 
-    [[ -n "$custom_filename" ]] && args+=(--out="$custom_filename")
+    # For HuggingFace, don't use --content-disposition and always specify filename
+    if [[ $original_url =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
+        [[ -n "$custom_filename" ]] && args+=(--out="$custom_filename")
+    else
+        # For non-HuggingFace URLs, use --content-disposition
+        args+=(--content-disposition=true)
+        [[ -n "$custom_filename" ]] && args+=(--out="$custom_filename")
+    fi
+
     [[ -n "$auth_header" ]] && args+=(--header="$auth_header")
 
-    # Try with --content-disposition first
+    # Try the download
     if aria2c "${args[@]}" "$url" 2>/dev/null; then
         return 0
     fi
 
-    # If that fails, try without --content-disposition
-    printf "Retrying aria2c without --content-disposition...\n"
-    args=(${args[@]/--content-disposition=true/})
-    aria2c "${args[@]}" "$url"
+    # If that fails and we used --content-disposition, try without it
+    if [[ ! $original_url =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
+        printf "Retrying aria2c without --content-disposition...\n"
+        args=(${args[@]/--content-disposition=true/})
+        aria2c "${args[@]}" "$url"
+    else
+        return 1
+    fi
 }
 
 function provisioning_download_wget() {
@@ -176,6 +202,7 @@ function provisioning_download_wget() {
     local destination="$2"
     local custom_filename="$3"
     local auth_header="$4"
+    local original_url="$5"
 
     local args=(
         -qnc
@@ -184,11 +211,22 @@ function provisioning_download_wget() {
         -P "$destination"
     )
 
-    # wget handles --content-disposition more reliably than aria2c
-    if [[ -z "$custom_filename" ]]; then
-        args+=(--content-disposition)
+    # Handle filename logic based on URL type
+    if [[ $original_url =~ ^https://([a-zA-Z0-9_-]+\.)?huggingface\.co(/|$|\?) ]]; then
+        # For HuggingFace, always specify output filename (don't use --content-disposition)
+        if [[ -n "$custom_filename" ]]; then
+            args+=(-O "${destination}/${custom_filename}")
+        else
+            # This shouldn't happen since we extract filename above, but just in case
+            args+=(--content-disposition)
+        fi
     else
-        args+=(-O "${destination}/${custom_filename}")
+        # For non-HuggingFace URLs, use --content-disposition unless custom filename provided
+        if [[ -z "$custom_filename" ]]; then
+            args+=(--content-disposition)
+        else
+            args+=(-O "${destination}/${custom_filename}")
+        fi
     fi
 
     [[ -n "$auth_header" ]] && args+=(--header="$auth_header")
