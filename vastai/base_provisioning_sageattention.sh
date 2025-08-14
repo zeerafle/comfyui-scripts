@@ -59,6 +59,11 @@ function provisioning_get_pip_packages() {
     fi
 
     # Install SageAttention from source
+
+    # install prerequisites (triton)
+    printf "Installing prerequisites for SageAttention...\n"
+    pip install --no-cache-dir "triton>=3.0.0"
+
     printf "Installing SageAttention from source...\n"
     cd /tmp
     git clone https://github.com/thu-ml/SageAttention.git
