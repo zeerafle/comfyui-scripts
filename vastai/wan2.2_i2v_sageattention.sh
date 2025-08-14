@@ -30,17 +30,7 @@ fi
 # Source the downloaded base script
 source "$temp_base_script"
 
-# Package definitions
-APT_PACKAGES=(
-    "aria2"
-    "git"
-    "build-essential"
-)
-
-PIP_PACKAGES=(
-    "ninja"
-    "packaging"
-)
+PIP_PACKAGES=()
 
 NODES=(
     "https://github.com/ltdrdata/ComfyUI-Manager"

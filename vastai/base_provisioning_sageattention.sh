@@ -16,6 +16,13 @@ USE_ARIA2C=${USE_ARIA2C:-true}
 ARIA2C_MAX_CONN=${ARIA2C_MAX_CONN:-4}
 ARIA2C_SPLIT=${ARIA2C_SPLIT:-4}
 
+# Default APT packages for all scripts
+APT_PACKAGES=(
+    "aria2"
+    "git"
+    "build-essential"
+)
+
 function provisioning_start() {
     provisioning_print_header
     provisioning_get_apt_packages
@@ -62,14 +69,14 @@ function provisioning_get_pip_packages() {
 
     # install prerequisites (triton)
     printf "Installing prerequisites for SageAttention...\n"
-    pip install --no-cache-dir "triton>=3.0.0"
+    pip install --no-cache-dir "triton>=3.0.0" "torch>=2.3.0" setuptools
 
     printf "Installing SageAttention from source...\n"
     cd /tmp
     git clone https://github.com/thu-ml/SageAttention.git
     cd SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    pip install -e .
+    pip install --no-build-isolation -e .
     cd /
     rm -rf /tmp/SageAttention
 }
@@ -286,7 +293,6 @@ function provisioning_has_valid_civitai_token() {
 }
 
 # Initialize empty arrays for all model types to prevent errors
-declare -a APT_PACKAGES=()
 declare -a PIP_PACKAGES=()
 declare -a NODES=()
 declare -a WORKFLOWS=()
