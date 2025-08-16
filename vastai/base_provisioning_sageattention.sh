@@ -76,7 +76,7 @@ function provisioning_get_pip_packages() {
     git clone https://github.com/thu-ml/SageAttention.git
     cd SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    pip install --no-build-isolation -e .
+    python setup.py install
     cd /
     rm -rf /tmp/SageAttention
 }

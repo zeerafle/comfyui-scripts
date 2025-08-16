@@ -30,13 +30,6 @@ fi
 # Source the downloaded base script
 source "$temp_base_script"
 
-# Package definitions
-APT_PACKAGES=(
-    "aria2"
-    "git"
-    "build-essential"
-)
-
 PIP_PACKAGES=(
     "ninja"
     "packaging"
@@ -66,6 +59,7 @@ LORA_MODELS=(
     "https://civitai.com/api/download/models/970280?type=Model&format=SafeTensor"
     "https://civitai.com/api/download/models/1366323?type=Model&format=SafeTensor"
     "https://huggingface.co/alimama-creative/FLUX.1-Turbo-Alpha/resolve/main/diffusion_pytorch_model.safetensors?download=true"
+    "https://civitai.com/api/download/models/806426?type=Model&format=SafeTensor"
 )
 
 TEXT_ENCODERS=(
